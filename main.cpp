@@ -14,6 +14,7 @@
 #include <vector>
 
 using namespace std;
+#define PORT 3333
 
 int main()
 {
@@ -25,19 +26,18 @@ int main()
     char buffer[1025];  // data buffer of 1k
 
     //set of socket descriptors
-    struct pollfd fds[30];
+    struct pollfd fds[max_clients];
 
     //welcome message
     string message = "lalalulu";
 
+
     // initialize all client_socket[] to 0 so not checked
     for (auto &fd: fds){
-        client_socket[i]=-1;
         fd.fd=-1;
         fd.events=POLLIN;
     }
-
-
+cout << message << endl;
     //create master socket
     if((master_socket = socket(AF_INET,SOCK_STREAM,0)) == 0)
     {
@@ -59,6 +59,11 @@ int main()
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(3333);
 
+    // IPV6
+    master_socket = socket(AF_INET6, SOCK_STREAM , IPPROTO_TCP);
+    if (master_socket == -1) {return EXIT_FAILURE};
+
+
     //bind the socket to localhost port 3333
     if(bind(master_socket,(struct sockaddr*) &address,sizeof(address)) < 0 ){
         cerr << "bind failed" << endl;
@@ -77,13 +82,6 @@ int main()
     cout << "Waiting for connections..." << endl;
 
     while (1) {
-
-        //fds[0]=bullshit;
-        cout << fds[0].fd << "asdasdas" << endl;
-
-        //wait for an activity on one of the sockets, timeout is NULL,
-        //so wait indefinetely, max_sd+1 is important!
-        //activity = select(max_sd + 1,&readfds,nullptr,nullptr,nullptr);poll()
 
         cout << "es wird neu gepolled!" <<  endl;
         cout << fds[1].fd << endl;
@@ -105,11 +103,6 @@ int main()
                  << "ip is: " << inet_ntoa(address.sin_addr) << endl
                  << "port is: " << ntohs(address.sin_port) << endl;
 
-            //send greeting message
-            if ( send(new_socket,message.c_str(),strlen(message.c_str()),0)<0){
-                cerr << "kann irgendwie nix zum client senden" <<endl;
-            }
-
             //add new_socket to sock array
             for(auto& fdd : fds){
                 //if position empty
@@ -118,22 +111,9 @@ int main()
                     fdd.fd=new_socket;
                     //fds[1].fd = new_socket;
 
-                    cout << "ich akzeptiere jatzt" << fdd.fd << endl;
-                    for(auto fdd : fds){
-                        cout << fdd.fd << endl;
-                    }
-
                     break;
                 }
             }
-            /*for(i=0;i<max_clients;i++){
-                //if position empty
-                if(client_socket[i]==0){
-                    client_socket[i]=new_socket;
-                    cout << "client socket zur fd liste geadded" << endl;
-                    break;
-                }
-            }*/
 
         };
         //else its some IO on another socket
@@ -143,6 +123,7 @@ int main()
                 //Check if it was for closing, and also read the incoming message
                 cout << "will was lesen" << endl;
                 if((valread = read(fds[i].fd,buffer,1024)) == 0){
+                    cout << "client message: " << buffer;
                     //Somebody disconnectedm get his details and print
                     getpeername(fds[i].fd, (struct sockaddr*) &address,(socklen_t*)&addrlen);
                     cout << "Somebody disconnected!" << endl << "socket_fd is:" << fds[i].fd << endl
