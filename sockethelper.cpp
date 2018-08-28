@@ -2,6 +2,7 @@
 #include <iostream>
 #include <poll.h>
 #include <unistd.h>
+#include <thread>
 
 using namespace std;
 
@@ -86,19 +87,66 @@ void SocketHelper::init()
     pollSock();
 }
 
+
+
 /*
  * TODO IFDEF IPV4 ACCEPT ON SOCK 1
  *      IFDEF IPV6 ACCEPT ON SOCK 0
+ *
+ *      SOCKADDR_STORAGE, GETNAMEINFO ON IPV4 POSSIBLE?
  */
 void SocketHelper::pollSock(){
-    int socket_0=fds[0].fd,socket_1=fds[1].fd;
-    int peeraddr_len = sizeof(peeraddr);
+    int socket_0=0;
+    //int peeraddr_len = sizeof(peeraddr);
 
-    while ((socket_0 = accept(socket_1, (struct sockaddr*) &peeraddr, (socklen_t*) &peeraddr_len))) {
+
+    struct sockaddr_storage peeraddr;
+    int peeraddr_len =  sizeof(peeraddr);
+    /*while ((socket_1 = accept(socket_0, (struct sockaddr*) &peeraddr, (socklen_t*) &peeraddr_len))) {
+        thread_data th_data;
+
+
+        getnameinfo((struct sockaddr *) &peeraddr, peeraddr_len, th_data.client_address,
+                        sizeof(th_data.client_address), NULL, 0, NI_NUMERICHOST);
+
+        cout << th_data.client_address << "neu" << endl;
+
+        thread connThread(connectionHandler,th_data);
+        connThread.detach();
+
         cout << "juju" << socket_0 << endl;
+    }*/
+
+    while (true){
+        int activity = poll(fds,sizeof(fds),1000);
+        thread_data th_data;
+        //ipv6 connection detected
+        if(fds[0].revents & POLLIN){
+            cout << "bin schonma hier" <<endl;
+            socket_0 = accept(fds[0].fd, (struct sockaddr*) &peeraddr, (socklen_t*) &peeraddr_len);
+
+            getnameinfo((struct sockaddr *) &peeraddr, peeraddr_len, th_data.client_address,
+                            sizeof(th_data.client_address), NULL, 0, NI_NUMERICHOST);
+            thread connThread(connectionHandler,th_data);
+            connThread.detach();
+        }
+        if(fds[1].revents & POLLIN){
+            socket_0 = accept(fds[1].fd, (struct sockaddr*) &peeraddr, (socklen_t*) &peeraddr_len);
+
+            getnameinfo((struct sockaddr *) &peeraddr, peeraddr_len, th_data.client_address,
+                            sizeof(th_data.client_address), NULL, 0, NI_NUMERICHOST);
+
+            thread connThread(connectionHandler,th_data);
+            connThread.detach();
+        }
     }
-
-
 }
+
+
+void connectionHandler(thread_data th){
+    cout << th.client_address << endl;
+    return;
+}
+
 
 
