@@ -12,16 +12,26 @@
 #include <sys/time.h> //FD_SET, FD_ZERO, FD_ISSET etc
 #include <poll.h>
 #include <vector>
+#include "sockethelper.h"
 
 using namespace std;
 #define PORT 3333
 
 int main()
 {
+
+    SocketHelper* uiuiui = new SocketHelper();
+    return 1;
+
+
     int master_socket4,master_socket6, addrlen, new_socket, client_socket[30],
         max_clients=30, activity, i, valread;
     int max_sd;
     struct sockaddr_in ipv4Addr;
+
+    //neues geiles teil
+    struct sockaddr_storage ipAddr;
+    socklen_t addrLen = sizeof(ipAddr);
 
     char buffer[1025];  // data buffer of 1k
 
@@ -110,7 +120,7 @@ cout << message << endl;
         if(activity==0){
             continue;
         }else{
-            cout << "erfolgreich gepolled!" << endl << "activity: " << activity << "master_sock" << master_socket6 <<  endl;
+            cout << "erfolgreich gepolled!" << endl << "activity: " << activity << "master_sock" << master_socket6  << fds[1].revents <<  endl;
         }
 
 
@@ -120,8 +130,9 @@ cout << message << endl;
             cerr << "SELECT/POLL ERROR!" << endl;
         }
         //If something happens on the Master Socket(s), then its an incomming connection
-        if(fds[0].revents & POLLIN){
-            if ((new_socket = accept(master_socket4, (struct sockaddr*) &ipv4Addr,(socklen_t*) &ipv4Addr)) <0){
+        if((fds[1].revents & POLLIN) || (fds[0].revents & POLLIN)){
+            cout << "bin hier" << endl;
+            if ((new_socket = accept(master_socket6, (struct sockaddr*) &ipAddr,(socklen_t*) &addrLen)) <0){
                 cerr << "Error beim accepten des Sockets"  << new_socket<< endl;
                 exit(EXIT_FAILURE);
             }
@@ -142,7 +153,7 @@ cout << message << endl;
             }
 
         };
-        if(fds[1].revents & POLLIN){
+        /*if(fds[1].revents & POLLIN){
             if ((new_socket = accept(master_socket6, (struct sockaddr*) &ipv6Addr,(socklen_t*) &ipv6Addr)) <0){
                 cerr << "Error beim accepten des Sockets" << endl;
                 exit(EXIT_FAILURE);
@@ -165,7 +176,7 @@ cout << message << endl;
                 }
             }
 
-        };
+        };*/
         //else its some IO on another socket
         for(i=2;i<max_clients;i++){
 
