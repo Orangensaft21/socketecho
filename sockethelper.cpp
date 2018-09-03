@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <thread>
 
+#include "echohandler.h"
+
 using namespace std;
 
 SocketHelper::SocketHelper()
@@ -96,7 +98,7 @@ void SocketHelper::init()
  *      SOCKADDR_STORAGE, GETNAMEINFO ON IPV4 POSSIBLE?
  */
 void SocketHelper::pollSock(){
-    int socket_0=0;
+
     //int peeraddr_len = sizeof(peeraddr);
 
 
@@ -118,26 +120,28 @@ void SocketHelper::pollSock(){
     }*/
 
     while (true){
-        int activity = poll(fds,sizeof(fds),1000);
+        cout << "newpoll" << endl;
+        int activity = poll(fds,2,1000);
         thread_data th_data;
         //ipv6 connection detected
         if(fds[0].revents & POLLIN){
             cout << "bin schonma hier" <<endl;
-            socket_0 = accept(fds[0].fd, (struct sockaddr*) &peeraddr, (socklen_t*) &peeraddr_len);
+            th_data.socket = accept(fds[0].fd, (struct sockaddr*) &peeraddr, (socklen_t*) &peeraddr_len);
 
             getnameinfo((struct sockaddr *) &peeraddr, peeraddr_len, th_data.client_address,
                             sizeof(th_data.client_address), NULL, 0, NI_NUMERICHOST);
-            thread connThread(connectionHandler,th_data);
+            thread connThread(EchoHandler::handle,th_data);
             connThread.detach();
         }
         if(fds[1].revents & POLLIN){
-            socket_0 = accept(fds[1].fd, (struct sockaddr*) &peeraddr, (socklen_t*) &peeraddr_len);
+            th_data.socket = accept(fds[1].fd, (struct sockaddr*) &peeraddr, (socklen_t*) &peeraddr_len);
 
             getnameinfo((struct sockaddr *) &peeraddr, peeraddr_len, th_data.client_address,
                             sizeof(th_data.client_address), NULL, 0, NI_NUMERICHOST);
 
-            thread connThread(connectionHandler,th_data);
+            thread connThread(EchoHandler::handle,th_data);
             connThread.detach();
+
         }
     }
 }
