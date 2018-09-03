@@ -1,11 +1,12 @@
 #ifndef ECHOHANDLER_H
 #define ECHOHANDLER_H
 
+#include "sockethelper.h"
 
-class echohandler
-{
-public:
-    echohandler();
-};
+
+namespace EchoHandler {
+    void handle(thread_data th);
+}
+
 
 #endif // ECHOHANDLER_H

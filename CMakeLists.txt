@@ -6,5 +6,7 @@ add_executable(${PROJECT_NAME}
     "main.cpp"
     "sockethelper.h"
     "sockethelper.cpp"
+    "echohandler.h"
+    "echohandler.cpp"
 
     )

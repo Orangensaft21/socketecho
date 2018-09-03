@@ -82,7 +82,7 @@ void EchoHandler::handle(thread_data th)
     do {
        FD_ZERO(&readset);
        FD_SET(socket_fd, &readset);
-       result = select(socket_fd + 1, &readset, NULL, NULL, &tv);
+       result = select(socket_fd + 1, &readset, NULL, NULL, &to);
        cout << "test" << endl;
     } while (result == -1 && errno == EINTR);
 
